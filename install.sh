@@ -10,7 +10,7 @@ cd /tmp
 
 # Download
 echo "📥 Downloading..."
-curl -L -o MotMeister-Face.zip "https://github.com/MotMeister45/motmeister-face/releases/download/v1.1.0/MotMeister-Face-macOS.zip" 2>/dev/null
+curl -L -o MotMeister-Face.zip "https://github.com/MotMeister45/motmeister-face/releases/download/v1.1.1/MotMeister-Face-macOS.zip" 2>/dev/null
 
 # Unzip
 echo "📦 Extracting..."
