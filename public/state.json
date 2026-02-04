@@ -1,0 +1,9 @@
+{
+  "state": "thinking",
+  "weather": {
+    "temp": "--°F",
+    "icon": "☁️",
+    "desc": " +32°F Overcast"
+  },
+  "updated": "2026-02-04T01:56:50.094Z"
+}

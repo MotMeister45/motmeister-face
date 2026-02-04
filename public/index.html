@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MotMeister II - Live</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #0d0d2a 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      font-family: 'Courier New', monospace;
+    }
+    
+    .title {
+      position: absolute;
+      top: 30px;
+      font-size: 28px;
+      font-weight: bold;
+      letter-spacing: 6px;
+      color: #6a6aff;
+      text-shadow: 0 0 10px rgba(100, 100, 255, 0.5), 0 0 20px rgba(100, 100, 255, 0.3);
+      animation: titleGlow 3s ease-in-out infinite;
+      text-align: center;
+    }
+    
+    @keyframes titleGlow {
+      0%, 100% { opacity: 0.8; }
+      50% { opacity: 1; }
+    }
+    
+    .title .version {
+      font-size: 14px;
+      color: #4a4a8a;
+      letter-spacing: 2px;
+      display: block;
+      margin-top: 5px;
+    }
+    
+    .weather-info {
+      position: absolute;
+      top: 100px;
+      font-size: 14px;
+      color: #6a6aff;
+      letter-spacing: 2px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .weather-info .temp {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    
+    .container {
+      position: relative;
+      width: 350px;
+      height: 350px;
+      transition: transform 0.3s ease-out;
+    }
+    
+    .container.celebrate { animation: bounce 0.5s ease-out 3; }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-30px); }
+    }
+    
+    .ambient {
+      position: absolute;
+      width: 250px;
+      height: 250px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, rgba(100, 100, 255, 0.15) 0%, transparent 70%);
+      border-radius: 50%;
+      animation: breathe 4s ease-in-out infinite;
+      transition: all 0.5s ease;
+    }
+    
+    .container.celebrate .ambient {
+      background: radial-gradient(circle, rgba(255, 200, 100, 0.3) 0%, transparent 70%);
+      transform: translate(-50%, -50%) scale(1.5);
+    }
+    
+    @keyframes breathe {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+      50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; }
+    }
+    
+    .face {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 140px;
+      height: 100px;
+    }
+    
+    .eyes {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      padding: 0 10px;
+      transition: transform 0.3s ease;
+    }
+    
+    .eye {
+      position: relative;
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(180deg, #1a1a3a 0%, #0a0a1a 100%);
+      border: 2px solid #4a4a8a;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 0 10px rgba(100, 100, 255, 0.3), inset 0 0 10px rgba(0, 0, 0, 0.5);
+      transition: all 0.3s ease;
+    }
+    
+    .container.celebrate .eye, .container.happy .eye {
+      border-radius: 10px 10px 25px 25px;
+      height: 30px;
+      border-color: #ffaa00;
+      box-shadow: 0 0 15px rgba(255, 170, 0, 0.5);
+    }
+    
+    .pupil {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      background: linear-gradient(135deg, #6a6aff 0%, #4a4aff 50%, #3a3aee 100%);
+      border-radius: 4px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      transition: all 0.1s ease-out;
+      box-shadow: 0 0 8px rgba(100, 100, 255, 0.8);
+    }
+    
+    .container.celebrate .pupil, .container.happy .pupil {
+      background: linear-gradient(135deg, #ffcc00 0%, #ffaa00 50%, #ff8800 100%);
+      box-shadow: 0 0 8px rgba(255, 170, 0, 0.8);
+      opacity: 0;
+    }
+    
+    .pupil::after {
+      content: '';
+      position: absolute;
+      width: 5px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 2px;
+      top: 2px;
+      left: 2px;
+    }
+    
+    .eyelid {
+      position: absolute;
+      width: 100%;
+      height: 0%;
+      background: linear-gradient(180deg, #0a0a1a 0%, #1a1a3a 100%);
+      top: 0;
+      left: 0;
+      transition: height 0.1s ease-in-out;
+      z-index: 10;
+    }
+    
+    .eye.blink .eyelid { height: 100%; }
+    
+    /* THINKING MODE */
+    .container.thinking .ambient {
+      background: radial-gradient(circle, rgba(150, 100, 255, 0.25) 0%, transparent 70%);
+      animation: thinkPulse 1s ease-in-out infinite;
+    }
+    
+    @keyframes thinkPulse {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+      50% { transform: translate(-50%, -50%) scale(1.3); opacity: 0.9; }
+    }
+    
+    .container.thinking .eye {
+      border-color: #8a6aff;
+      box-shadow: 0 0 15px rgba(150, 100, 255, 0.5);
+    }
+    
+    .container.thinking .pupil {
+      background: linear-gradient(135deg, #aa8aff 0%, #8a6aff 50%, #6a4aee 100%);
+      box-shadow: 0 0 12px rgba(150, 100, 255, 0.9);
+      animation: thinkLook 2s ease-in-out infinite;
+    }
+    
+    @keyframes thinkLook {
+      0%, 100% { transform: translate(calc(-50% - 5px), calc(-50% - 6px)); }
+      25% { transform: translate(calc(-50% + 5px), calc(-50% - 4px)); }
+      50% { transform: translate(calc(-50% + 3px), calc(-50% - 8px)); }
+      75% { transform: translate(calc(-50% - 6px), calc(-50% - 5px)); }
+    }
+    
+    /* WAITING/QUESTIONING MODE */
+    .container.waiting .eye {
+      transform: translateY(-8px);
+      border-color: #88ccff;
+      box-shadow: 0 0 12px rgba(136, 204, 255, 0.4);
+    }
+    
+    .container.waiting .pupil {
+      transform: translate(-50%, -40%);
+      background: linear-gradient(135deg, #88ccff 0%, #66aaff 50%, #5599ee 100%);
+    }
+    
+    .container.waiting .ambient {
+      background: radial-gradient(circle, rgba(136, 204, 255, 0.15) 0%, transparent 70%);
+      animation: waitingPulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes waitingPulse {
+      0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
+      50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.1); }
+    }
+    
+    .question-mark {
+      display: none;
+      position: absolute;
+      top: 15%;
+      right: 20%;
+      font-size: 28px;
+      color: #88ccff;
+      text-shadow: 0 0 10px rgba(136, 204, 255, 0.8);
+      animation: floatQuestion 2s ease-in-out infinite;
+      z-index: 10;
+    }
+    
+    .container.waiting .question-mark {
+      display: block;
+    }
+    
+    @keyframes floatQuestion {
+      0%, 100% { transform: translateY(0) rotate(-5deg); opacity: 0.7; }
+      50% { transform: translateY(-8px) rotate(5deg); opacity: 1; }
+    }
+    
+    /* SNAP AWAKE - shocked/woken up */
+    .container.snap-awake .eye {
+      height: 50px !important;
+      width: 50px !important;
+      border-radius: 10px !important;
+      border: 2px solid #8a8aff !important;
+      background: linear-gradient(180deg, #1a1a3a 0%, #0a0a1a 100%) !important;
+      box-shadow: 0 0 20px rgba(100, 100, 255, 0.6) !important;
+      transition: all 0.12s ease-out !important;
+    }
+    
+    .container.snap-awake .eyelid {
+      height: 0 !important;
+    }
+    
+    .container.snap-awake .pupil {
+      height: 18px !important;
+      width: 18px !important;
+      background: linear-gradient(135deg, #8a8aff 0%, #6a6aff 50%, #5a5aee 100%) !important;
+      box-shadow: 0 0 12px rgba(100, 100, 255, 1) !important;
+    }
+    
+    .container.snap-awake .zzz { opacity: 0 !important; }
+    
+    .alert {
+      display: none;
+      position: absolute;
+      top: -20px;
+      right: -40px;
+      font-size: 28px;
+      font-weight: bold;
+      color: #ff4444;
+      text-shadow: 0 0 15px rgba(255, 68, 68, 0.8), 0 0 30px rgba(255, 68, 68, 0.5);
+      z-index: 10;
+    }
+    
+    .container.snap-awake .alert {
+      display: block;
+      animation: alertBurst 0.6s ease-out forwards, wobble 0.15s ease-in-out 0.6s infinite;
+    }
+    
+    @keyframes alertBurst {
+      0% { transform: translate(-30px, 30px) scale(0.3); opacity: 0; }
+      30% { transform: translate(0, 0) scale(1.2); opacity: 1; }
+      100% { transform: translate(0, 0) scale(1); }
+    }
+    
+    @keyframes wobble {
+      0%, 100% { transform: rotate(-3deg); }
+      50% { transform: rotate(3deg); }
+    }
+    
+    /* TIRED (level 1-2) */
+    .container.tired .eye {
+      height: 28px;
+      border-radius: 8px 8px 22px 22px;
+      border-color: #3a3a7a;
+    }
+    
+    .container.tired .eyelid {
+      height: 35%;
+      background: linear-gradient(180deg, #0a0a1a 0%, #0a0a1a 70%, transparent 100%);
+    }
+    
+    .container.tired .pupil {
+      height: 10px;
+      width: 12px;
+      opacity: 0.7;
+      top: 58%;
+    }
+    
+    .container.tired .ambient {
+      opacity: 0.3;
+      animation-duration: 6s;
+    }
+    
+    /* SLEEPING (level 3) - curved arc eyes */
+    .container.sleeping .eye {
+      height: 16px;
+      width: 48px;
+      border-radius: 4px 4px 24px 24px;
+      border-color: #2a2a5a;
+      background: transparent;
+      border-top: none;
+      border-width: 3px;
+      box-shadow: 0 0 8px rgba(100, 100, 255, 0.2);
+    }
+    
+    .container.sleeping .pupil { display: none; }
+    .container.sleeping .eyelid { display: none; }
+    
+    .container.sleeping .ambient {
+      opacity: 0.2;
+      animation-duration: 8s;
+    }
+    
+    .zzz {
+      position: absolute;
+      top: -20px;
+      right: -30px;
+      font-size: 24px;
+      font-weight: bold;
+      color: #6a6aff;
+      opacity: 0;
+      text-shadow: 0 0 10px rgba(100, 100, 255, 0.5);
+    }
+    
+    .container.sleeping .zzz {
+      opacity: 0.7;
+      animation: floatZ 3s ease-in-out infinite;
+    }
+    
+    @keyframes floatZ {
+      0%, 100% { transform: translateY(0) rotate(-5deg); opacity: 0.5; }
+      50% { transform: translateY(-10px) rotate(5deg); opacity: 1; }
+    }
+    
+    /* HOT */
+    .container.hot .ambient {
+      background: radial-gradient(circle, rgba(255, 100, 50, 0.35) 0%, rgba(255, 50, 0, 0.1) 50%, transparent 70%);
+      animation: heatShimmer 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes heatShimmer {
+      0%, 100% { transform: translate(-50%, -50%) scale(1) skewX(0deg); }
+      25% { transform: translate(-50%, -50%) scale(1.1) skewX(2deg); }
+      75% { transform: translate(-50%, -50%) scale(1.1) skewX(-2deg); }
+    }
+    
+    .container.hot .eye {
+      border-color: #ff6633;
+      box-shadow: 0 0 15px rgba(255, 100, 50, 0.6);
+    }
+    
+    .container.hot .pupil {
+      background: linear-gradient(135deg, #ff8844 0%, #ff5522 50%, #ee3300 100%);
+      box-shadow: 0 0 10px rgba(255, 100, 50, 0.9);
+    }
+    
+    /* COLD */
+    .container.cold .ambient {
+      background: radial-gradient(circle, rgba(150, 200, 255, 0.25) 0%, transparent 70%);
+    }
+    
+    .container.cold .eye {
+      border-color: #88ccff;
+      box-shadow: 0 0 15px rgba(136, 204, 255, 0.4);
+    }
+    
+    .container.cold .pupil {
+      background: linear-gradient(135deg, #88ccff 0%, #66aaff 50%, #4488ee 100%);
+    }
+    
+    /* Weather particles */
+    .weather-particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+    
+    .rain-drop {
+      position: absolute;
+      width: 2px;
+      height: 15px;
+      background: linear-gradient(to bottom, transparent, rgba(100, 150, 255, 0.6));
+      animation: rain 0.8s linear infinite;
+    }
+    
+    @keyframes rain {
+      0% { transform: translateY(-20px); opacity: 0; }
+      10% { opacity: 1; }
+      100% { transform: translateY(100vh); opacity: 0.3; }
+    }
+    
+    .snowflake {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: white;
+      border-radius: 50%;
+      opacity: 0.8;
+      animation: snow 4s linear infinite;
+    }
+    
+    @keyframes snow {
+      0% { transform: translateY(-20px) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.8; }
+      100% { transform: translateY(100vh) rotate(360deg); opacity: 0.3; }
+    }
+    
+    .status {
+      position: absolute;
+      bottom: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: #4a4aff;
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    .container.thinking .status-dot {
+      background: #8a6aff;
+      animation: thinkDots 0.6s ease-in-out infinite;
+    }
+    
+    .container.thinking .status-dot:nth-child(2) { animation-delay: 0.2s; }
+    .container.thinking .status-dot:nth-child(3) { animation-delay: 0.4s; }
+    
+    @keyframes thinkDots {
+      0%, 100% { transform: scale(0.8); opacity: 0.4; }
+      50% { transform: scale(1.3); opacity: 1; }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1); }
+    }
+    
+    .container.celebrate .status-dot {
+      background: #ffaa00;
+      box-shadow: 0 0 10px rgba(255, 170, 0, 0.8);
+    }
+    
+    .container.waiting .status-dot {
+      background: #88ccff;
+      animation: waitingDots 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes waitingDots {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+    
+    .container.sleeping .status-dot {
+      opacity: 0.3;
+      animation-duration: 5s;
+    }
+    
+    .connection {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 9px;
+      color: #4a4a6a;
+      letter-spacing: 1px;
+    }
+    
+    .connection-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #666;
+      transition: all 0.3s ease;
+    }
+    
+    .connection-dot.live {
+      background: #44ff88;
+      box-shadow: 0 0 8px rgba(68, 255, 136, 0.6);
+    }
+    
+    .connection-dot.busy {
+      background: #ffaa00;
+      box-shadow: 0 0 8px rgba(255, 170, 0, 0.6);
+      animation: busyPulse 1s ease-in-out infinite;
+    }
+    
+    .connection-dot.waiting-dot {
+      background: #88ccff;
+      box-shadow: 0 0 8px rgba(136, 204, 255, 0.6);
+      animation: busyPulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes busyPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .particle {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      background: rgba(100, 100, 255, 0.5);
+      border-radius: 50%;
+      animation: float 8s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(-120px) translateX(20px); opacity: 0; }
+    }
+    
+    .scanline {
+      position: absolute;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(100, 100, 255, 0.1), transparent);
+      animation: scan 4s linear infinite;
+      pointer-events: none;
+    }
+    
+    @keyframes scan {
+      0% { top: 0; }
+      100% { top: 100%; }
+    }
+    
+    .container.thinking .scanline {
+      background: linear-gradient(90deg, transparent, rgba(150, 100, 255, 0.3), transparent);
+      animation: scan 1.5s linear infinite;
+    }
+    
+    .mood {
+      position: absolute;
+      top: 90px;
+      font-size: 11px;
+      color: #4a4a8a;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      opacity: 0.7;
+    }
+    
+    .processing {
+      position: absolute;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 9px;
+      color: #6a5a9a;
+      letter-spacing: 1px;
+      opacity: 0;
+      white-space: nowrap;
+    }
+    
+    .container.thinking .processing {
+      opacity: 1;
+      animation: typeText 2s steps(20) infinite;
+    }
+    
+    @keyframes typeText {
+      0%, 100% { width: 0; }
+      50% { width: 180px; }
+    }
+    
+    .fireworks {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 100;
+    }
+    
+    .spark {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+    }
+    
+    .celebration-text {
+      position: absolute;
+      top: 35%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      font-size: 32px;
+      font-weight: bold;
+      color: #ffcc00;
+      text-shadow: 0 0 10px rgba(255, 200, 0, 0.8), 0 0 20px rgba(255, 150, 0, 0.6);
+      opacity: 0;
+      z-index: 50;
+      white-space: nowrap;
+    }
+    
+    .celebration-text.show {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+      animation: celebText 0.5s ease-out;
+    }
+    
+    @keyframes celebText {
+      0% { transform: translate(-50%, -50%) scale(0) rotate(-10deg); }
+      50% { transform: translate(-50%, -50%) scale(1.2) rotate(5deg); }
+      100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+    }
+    
+    .time-display {
+      position: absolute;
+      bottom: 45px;
+      font-size: 9px;
+      color: #3a3a5a;
+      letter-spacing: 1px;
+    }
+    
+    .footer {
+      position: absolute;
+      bottom: 15px;
+      font-size: 10px;
+      color: #3a3a5a;
+      letter-spacing: 1px;
+    }
+    
+    .footer a {
+      color: #5a5aaa;
+      text-decoration: none;
+    }
+    
+    .footer a:hover {
+      color: #7a7aff;
+    }
+  </style>
+</head>
+<body>
+  <div class="title">
+    MOTMEISTER
+    <span class="version">THE SECOND — LIVE</span>
+  </div>
+  
+  <div class="weather-info" id="weatherInfo">
+    <span id="weatherIcon">☁️</span>
+    <span class="temp" id="tempDisplay">--°F</span>
+    <span id="weatherDesc">Loading...</span>
+  </div>
+  
+  <div class="connection">
+    <div class="connection-dot" id="connectionDot"></div>
+    <span id="connectionText">SYNCING</span>
+  </div>
+  
+  <div class="mood" id="mood">STATUS: LOADING...</div>
+  
+  <div class="fireworks" id="fireworks"></div>
+  <div class="weather-particles" id="weatherParticles"></div>
+  <div class="celebration-text" id="celebText">🎉 NICE! 🎉</div>
+  
+  <div class="container" id="container">
+    <div class="ambient"></div>
+    <div class="scanline"></div>
+    <div class="question-mark" id="questionMark">?</div>
+    
+    <div class="particle" style="left: 15%; top: 85%; animation-delay: 0s;"></div>
+    <div class="particle" style="left: 75%; top: 80%; animation-delay: 2s;"></div>
+    <div class="particle" style="left: 35%; top: 90%; animation-delay: 4s;"></div>
+    <div class="particle" style="left: 55%; top: 85%; animation-delay: 6s;"></div>
+    <div class="particle" style="left: 85%; top: 88%; animation-delay: 1s;"></div>
+    
+    <div class="face" id="face">
+      <div class="eyes">
+        <div class="eye" id="leftEye">
+          <div class="eyelid"></div>
+          <div class="pupil" id="leftPupil"></div>
+        </div>
+        <div class="eye" id="rightEye">
+          <div class="eyelid"></div>
+          <div class="pupil" id="rightPupil"></div>
+        </div>
+      </div>
+      <div class="zzz" id="zzz"><span>z</span><span style="font-size:22px;margin-left:2px">Z</span><span style="font-size:14px;margin-left:2px">z</span></div>
+      <div class="alert" id="alert"><span>!</span><span style="font-size:24px;margin-left:2px">!</span></div>
+      <div class="status">
+        <div class="status-dot"></div>
+        <div class="status-dot"></div>
+        <div class="status-dot"></div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="processing" id="processing">thinking...</div>
+  <div class="time-display" id="timeDisplay"></div>
+  <div class="footer">watching from afar 👁️ • <a href="https://openclaw.ai" target="_blank">powered by OpenClaw</a></div>
+
+  <script>
+    const container = document.getElementById('container');
+    const leftPupil = document.getElementById('leftPupil');
+    const rightPupil = document.getElementById('rightPupil');
+    const leftEye = document.getElementById('leftEye');
+    const rightEye = document.getElementById('rightEye');
+    const moodEl = document.getElementById('mood');
+    const connectionDot = document.getElementById('connectionDot');
+    const connectionText = document.getElementById('connectionText');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const weatherContainer = document.getElementById('weatherParticles');
+    const fireworksContainer = document.getElementById('fireworks');
+    const celebText = document.getElementById('celebText');
+    const tempDisplay = document.getElementById('tempDisplay');
+    const weatherIcon = document.getElementById('weatherIcon');
+    const weatherDesc = document.getElementById('weatherDesc');
+    
+    const celebrationPhrases = [
+      "🎉 NICE! 🎉", "🔥 LET'S GO! 🔥", "⚡ CRUSHED IT! ⚡",
+      "🚀 SHIPPED! 🚀", "✨ BEAUTIFUL! ✨", "💪 GOT 'EM! 💪"
+    ];
+    
+    let currentState = 'vibing';
+    let lastCelebrateTime = 0;
+    
+    // Random blinking
+    function blink() {
+      if (container.classList.contains('celebrate') || container.classList.contains('sleeping')) {
+        setTimeout(blink, 2000 + Math.random() * 4000);
+        return;
+      }
+      leftEye.classList.add('blink');
+      rightEye.classList.add('blink');
+      setTimeout(() => {
+        leftEye.classList.remove('blink');
+        rightEye.classList.remove('blink');
+      }, 150);
+      setTimeout(blink, 2000 + Math.random() * 4000);
+    }
+    setTimeout(blink, 1000);
+    
+    // Idle look around
+    function idleLook() {
+      if (container.classList.contains('celebrate') || container.classList.contains('thinking') || 
+          container.classList.contains('sleeping') || container.classList.contains('waiting')) {
+        setTimeout(idleLook, 4000 + Math.random() * 4000);
+        return;
+      }
+      const randomX = (Math.random() - 0.5) * 12;
+      const randomY = (Math.random() - 0.5) * 8;
+      leftPupil.style.transform = `translate(calc(-50% + ${randomX}px), calc(-50% + ${randomY}px))`;
+      rightPupil.style.transform = `translate(calc(-50% + ${randomX}px), calc(-50% + ${randomY}px))`;
+      setTimeout(() => {
+        leftPupil.style.transform = 'translate(-50%, -50%)';
+        rightPupil.style.transform = 'translate(-50%, -50%)';
+      }, 800);
+      setTimeout(idleLook, 4000 + Math.random() * 4000);
+    }
+    setTimeout(idleLook, 5000);
+    
+    // Time display
+    function updateTime() {
+      const now = new Date();
+      const nycTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+      timeDisplay.textContent = nycTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + ' NYC';
+    }
+    setInterval(updateTime, 60000);
+    updateTime();
+    
+    // Fireworks
+    function createFirework(x, y, mega = false) {
+      const colors = ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#ff6eb4', '#a855f7'];
+      const particleCount = mega ? 40 : 20;
+      for (let i = 0; i < particleCount; i++) {
+        const spark = document.createElement('div');
+        spark.className = 'spark';
+        spark.style.left = x + 'px';
+        spark.style.top = y + 'px';
+        spark.style.background = colors[Math.floor(Math.random() * colors.length)];
+        spark.style.boxShadow = `0 0 6px ${spark.style.background}`;
+        const angle = (Math.PI * 2 / particleCount) * i;
+        const velocity = mega ? 150 + Math.random() * 100 : 80 + Math.random() * 60;
+        const vx = Math.cos(angle) * velocity;
+        const vy = Math.sin(angle) * velocity;
+        spark.animate([
+          { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+          { transform: `translate(${vx}px, ${vy}px) scale(0)`, opacity: 0 }
+        ], { duration: mega ? 1500 : 1000, easing: 'cubic-bezier(0, 0.5, 0.5, 1)' });
+        fireworksContainer.appendChild(spark);
+        setTimeout(() => spark.remove(), mega ? 1500 : 1000);
+      }
+    }
+    
+    // Weather particles
+    function setWeatherEffect(type) {
+      weatherContainer.innerHTML = '';
+      if (type === 'rain') {
+        for (let i = 0; i < 50; i++) {
+          const drop = document.createElement('div');
+          drop.className = 'rain-drop';
+          drop.style.left = Math.random() * 100 + '%';
+          drop.style.animationDelay = Math.random() * 2 + 's';
+          drop.style.animationDuration = (0.5 + Math.random() * 0.5) + 's';
+          weatherContainer.appendChild(drop);
+        }
+      } else if (type === 'snow') {
+        for (let i = 0; i < 30; i++) {
+          const flake = document.createElement('div');
+          flake.className = 'snowflake';
+          flake.style.left = Math.random() * 100 + '%';
+          flake.style.animationDelay = Math.random() * 4 + 's';
+          flake.style.animationDuration = (3 + Math.random() * 2) + 's';
+          weatherContainer.appendChild(flake);
+        }
+      }
+    }
+    
+    // Apply state
+    function applyState(state) {
+      if (state === currentState) return;
+      
+      // Clear all states
+      container.classList.remove('thinking', 'celebrate', 'happy', 'tired', 'sleeping', 
+                                  'hot', 'cold', 'waiting', 'snap-awake');
+      weatherContainer.innerHTML = '';
+      
+      currentState = state;
+      connectionDot.classList.remove('live', 'busy', 'waiting-dot');
+      connectionDot.classList.add('live');
+      connectionText.textContent = 'LIVE';
+      
+      switch (state) {
+        case 'thinking':
+          container.classList.add('thinking');
+          connectionDot.classList.remove('live');
+          connectionDot.classList.add('busy');
+          connectionText.textContent = 'WORKING';
+          moodEl.textContent = 'STATUS: THINKING...';
+          moodEl.style.color = '#8a6aff';
+          break;
+          
+        case 'waiting':
+          container.classList.add('waiting');
+          connectionDot.classList.remove('live');
+          connectionDot.classList.add('waiting-dot');
+          connectionText.textContent = 'WAITING';
+          moodEl.textContent = 'STATUS: WAITING FOR RESPONSE...';
+          moodEl.style.color = '#88ccff';
+          break;
+          
+        case 'snap-awake':
+          container.classList.add('snap-awake');
+          moodEl.textContent = 'STATUS: !? WAKING UP';
+          moodEl.style.color = '#8a8aff';
+          // Auto-transition to vibing after 2 seconds
+          setTimeout(() => {
+            if (currentState === 'snap-awake') {
+              container.classList.remove('snap-awake');
+              currentState = 'vibing';
+              moodEl.textContent = 'STATUS: VIBING';
+              moodEl.style.color = '#4a4a8a';
+            }
+          }, 2000);
+          break;
+          
+        case 'celebrate':
+        case 'celebrate-mega':
+          const mega = state === 'celebrate-mega';
+          container.classList.add('celebrate');
+          if (mega) container.classList.add('happy');
+          moodEl.textContent = mega ? 'STATUS: 🔥 ON FIRE 🔥' : 'STATUS: CELEBRATING';
+          moodEl.style.color = '#ffaa00';
+          celebText.textContent = celebrationPhrases[Math.floor(Math.random() * celebrationPhrases.length)];
+          celebText.classList.add('show');
+          const now = Date.now();
+          if (now - lastCelebrateTime > 2000) {
+            lastCelebrateTime = now;
+            const bursts = mega ? 8 : 4;
+            for (let i = 0; i < bursts; i++) {
+              setTimeout(() => {
+                createFirework(Math.random() * window.innerWidth, Math.random() * window.innerHeight * 0.6, mega);
+              }, i * (mega ? 200 : 300));
+            }
+          }
+          setTimeout(() => {
+            container.classList.remove('celebrate', 'happy');
+            celebText.classList.remove('show');
+            currentState = 'vibing';
+            moodEl.textContent = 'STATUS: VIBING';
+            moodEl.style.color = '#4a4a8a';
+          }, mega ? 4000 : 2500);
+          break;
+          
+        case 'tired':
+        case 'tired-1':
+        case 'tired-2':
+          container.classList.add('tired');
+          moodEl.textContent = 'STATUS: SLEEPY...';
+          moodEl.style.color = '#4a4a7a';
+          break;
+          
+        case 'sleeping':
+        case 'tired-3':
+          container.classList.add('sleeping');
+          moodEl.textContent = 'STATUS: ZZZ...';
+          moodEl.style.color = '#3a3a5a';
+          break;
+          
+        case 'hot':
+          container.classList.add('hot');
+          moodEl.textContent = 'STATUS: 🔥 HOT 🔥';
+          moodEl.style.color = '#ff5522';
+          break;
+          
+        case 'cold':
+          container.classList.add('cold');
+          moodEl.textContent = 'STATUS: 🥶 COLD';
+          moodEl.style.color = '#88ccff';
+          break;
+          
+        case 'rain':
+          setWeatherEffect('rain');
+          moodEl.textContent = 'STATUS: 🌧️ RAINY';
+          moodEl.style.color = '#6688cc';
+          break;
+          
+        case 'snow':
+          setWeatherEffect('snow');
+          moodEl.textContent = 'STATUS: ❄️ SNOWY';
+          moodEl.style.color = '#88ccff';
+          break;
+          
+        default:
+          moodEl.textContent = 'STATUS: VIBING';
+          moodEl.style.color = '#4a4a8a';
+      }
+    }
+    
+    // Poll for state updates
+    async function pollState() {
+      try {
+        const response = await fetch('state.json?t=' + Date.now());
+        if (response.ok) {
+          const data = await response.json();
+          applyState(data.state || 'vibing');
+          if (data.weather) {
+            tempDisplay.textContent = data.weather.temp || '--°F';
+            weatherIcon.textContent = data.weather.icon || '☁️';
+            weatherDesc.textContent = data.weather.desc || '';
+          }
+        }
+      } catch (e) {
+        // Silently fail
+      }
+    }
+    
+    applyState('vibing');
+    pollState();
+    setInterval(pollState, 3000);
+    
+    // Mouse tracking
+    document.addEventListener('mousemove', (e) => {
+      if (container.classList.contains('celebrate') || container.classList.contains('thinking') || 
+          container.classList.contains('sleeping') || container.classList.contains('waiting')) return;
+      const rect = document.getElementById('face').getBoundingClientRect();
+      const faceCenterX = rect.left + rect.width / 2;
+      const faceCenterY = rect.top + rect.height / 2;
+      const deltaX = (e.clientX - faceCenterX) / 50;
+      const deltaY = (e.clientY - faceCenterY) / 50;
+      const maxMove = 8;
+      const moveX = Math.max(-maxMove, Math.min(maxMove, deltaX));
+      const moveY = Math.max(-maxMove, Math.min(maxMove, deltaY));
+      leftPupil.style.transform = `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px))`;
+      rightPupil.style.transform = `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px))`;
+    });
+  </script>
+</body>
+</html>

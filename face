@@ -1,0 +1,21 @@
+#!/bin/bash
+# MotMeister Face Control
+# Usage: face think | face celebrate | face happy | face weather.rain | etc.
+
+COMMAND="${1:-}"
+
+if [ -z "$COMMAND" ]; then
+  echo "Usage: face <command>"
+  echo "Commands: think, stopThinking, celebrate, celebrate(true), happy, hot, weather.rain, weather.snow, weather.cold, weather.clear"
+  exit 1
+fi
+
+# Add parentheses if not present
+if [[ ! "$COMMAND" =~ \(.*\)$ ]]; then
+  COMMAND="${COMMAND}()"
+fi
+
+curl -s -X POST http://127.0.0.1:3845/command \
+  -H "Content-Type: application/json" \
+  -d "{\"command\": \"$COMMAND\"}"
+echo

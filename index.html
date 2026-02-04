@@ -1,0 +1,1855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MotMeister II</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #0d0d2a 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      font-family: 'Courier New', monospace;
+    }
+    
+    /* Title at top */
+    .title {
+      position: absolute;
+      top: 30px;
+      font-size: 28px;
+      font-weight: bold;
+      letter-spacing: 6px;
+      color: #6a6aff;
+      text-shadow: 
+        0 0 10px rgba(100, 100, 255, 0.5),
+        0 0 20px rgba(100, 100, 255, 0.3),
+        0 0 40px rgba(100, 100, 255, 0.2);
+      animation: titleGlow 3s ease-in-out infinite;
+    }
+    
+    @keyframes titleGlow {
+      0%, 100% { opacity: 0.8; }
+      50% { opacity: 1; }
+    }
+    
+    .title .version {
+      font-size: 14px;
+      color: #4a4a8a;
+      letter-spacing: 2px;
+      display: block;
+      text-align: center;
+      margin-top: 5px;
+      text-shadow: none;
+    }
+    
+    .container {
+      position: relative;
+      width: 350px;
+      height: 350px;
+      transition: transform 0.3s ease-out;
+    }
+    
+    /* Celebration bounce */
+    .container.celebrate {
+      animation: bounce 0.5s ease-out 3;
+    }
+    
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-30px); }
+    }
+    
+    /* Ambient glow */
+    .ambient {
+      position: absolute;
+      width: 250px;
+      height: 250px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, rgba(100, 100, 255, 0.15) 0%, transparent 70%);
+      border-radius: 50%;
+      animation: breathe 4s ease-in-out infinite;
+      transition: all 0.5s ease;
+    }
+    
+    .container.celebrate .ambient {
+      background: radial-gradient(circle, rgba(255, 200, 100, 0.3) 0%, transparent 70%);
+      transform: translate(-50%, -50%) scale(1.5);
+    }
+    
+    @keyframes breathe {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+      50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; }
+    }
+    
+    /* Face container */
+    .face {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 140px;
+      height: 100px;
+    }
+    
+    /* Eyes */
+    .eyes {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      padding: 0 10px;
+      transition: transform 0.3s ease;
+    }
+    
+    .eye {
+      position: relative;
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(180deg, #1a1a3a 0%, #0a0a1a 100%);
+      border: 2px solid #4a4a8a;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 
+        0 0 10px rgba(100, 100, 255, 0.3),
+        inset 0 0 10px rgba(0, 0, 0, 0.5);
+      transition: all 0.3s ease;
+    }
+    
+    /* Happy eyes - curved like ^ ^ */
+    .container.celebrate .eye,
+    .container.happy .eye {
+      border-radius: 10px 10px 25px 25px;
+      height: 30px;
+      border-color: #ffaa00;
+      box-shadow: 
+        0 0 15px rgba(255, 170, 0, 0.5),
+        inset 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+    
+    .pupil {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      background: linear-gradient(135deg, #6a6aff 0%, #4a4aff 50%, #3a3aee 100%);
+      border-radius: 4px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      transition: all 0.1s ease-out;
+      box-shadow: 
+        0 0 8px rgba(100, 100, 255, 0.8),
+        0 0 15px rgba(100, 100, 255, 0.4);
+    }
+    
+    .container.celebrate .pupil,
+    .container.happy .pupil {
+      background: linear-gradient(135deg, #ffcc00 0%, #ffaa00 50%, #ff8800 100%);
+      box-shadow: 
+        0 0 8px rgba(255, 170, 0, 0.8),
+        0 0 15px rgba(255, 170, 0, 0.4);
+      opacity: 0;
+    }
+    
+    .pupil::after {
+      content: '';
+      position: absolute;
+      width: 5px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 2px;
+      top: 2px;
+      left: 2px;
+    }
+    
+    /* Eyelids for blinking */
+    .eyelid {
+      position: absolute;
+      width: 100%;
+      height: 0%;
+      background: linear-gradient(180deg, #0a0a1a 0%, #1a1a3a 100%);
+      top: 0;
+      left: 0;
+      transition: height 0.1s ease-in-out;
+      z-index: 10;
+    }
+    
+    .eye.blink .eyelid {
+      height: 100%;
+    }
+    
+    /* ERROR STATE - X_X eyes */
+    .container.error .eye {
+      border-color: #ff4444;
+      box-shadow: 0 0 15px rgba(255, 68, 68, 0.5);
+    }
+    
+    .container.error .pupil {
+      opacity: 0;
+    }
+    
+    .container.error .eye::before,
+    .container.error .eye::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 4px;
+      background: #ff4444;
+      top: 50%;
+      left: 50%;
+      box-shadow: 0 0 8px rgba(255, 68, 68, 0.8);
+      z-index: 5;
+    }
+    
+    .container.error .eye::before {
+      transform: translate(-50%, -50%) rotate(45deg);
+    }
+    
+    .container.error .eye::after {
+      transform: translate(-50%, -50%) rotate(-45deg);
+    }
+    
+    .container.error .ambient {
+      background: radial-gradient(circle, rgba(255, 68, 68, 0.2) 0%, transparent 70%);
+    }
+    
+    /* LISTENING STATE - wide eyes */
+    .container.listening .eye {
+      width: 52px;
+      height: 52px;
+      border-color: #66ffaa;
+      box-shadow: 0 0 15px rgba(100, 255, 170, 0.4);
+    }
+    
+    .container.listening .pupil {
+      width: 18px;
+      height: 18px;
+      background: linear-gradient(135deg, #66ffaa 0%, #44dd88 50%, #33cc77 100%);
+      box-shadow: 0 0 10px rgba(100, 255, 170, 0.8);
+    }
+    
+    .container.listening .ambient {
+      background: radial-gradient(circle, rgba(100, 255, 170, 0.15) 0%, transparent 70%);
+    }
+    
+    /* SKEPTICAL STATE - one eye higher */
+    .container.skeptical .eyes {
+      transform: rotate(-5deg);
+    }
+    
+    .container.skeptical #leftEye {
+      transform: translateY(-8px);
+    }
+    
+    .container.skeptical #leftPupil {
+      transform: translate(-50%, -30%);
+    }
+    
+    .container.skeptical #rightPupil {
+      transform: translate(-50%, -50%);
+    }
+    
+    /* CURIOUS STATE - tilted eyes */
+    .container.curious .eyes {
+      transform: rotate(8deg);
+    }
+    
+    .container.curious .pupil {
+      transform: translate(-30%, -60%);
+    }
+    
+    .container.curious .eye {
+      border-color: #aa88ff;
+    }
+    
+    .container.curious .ambient {
+      background: radial-gradient(circle, rgba(170, 136, 255, 0.2) 0%, transparent 70%);
+    }
+    
+    /* WAITING/INQUISITIVE STATE - raised eyebrows, looking expectantly */
+    .container.waiting .eye {
+      transform: translateY(-8px);
+      border-color: #88ccff;
+      box-shadow: 0 0 12px rgba(136, 204, 255, 0.4);
+    }
+    
+    .container.waiting .pupil {
+      transform: translate(-50%, -40%);
+      background: linear-gradient(135deg, #88ccff 0%, #66aaff 50%, #5599ee 100%);
+    }
+    
+    .container.waiting .ambient {
+      background: radial-gradient(circle, rgba(136, 204, 255, 0.15) 0%, transparent 70%);
+      animation: waitingPulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes waitingPulse {
+      0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
+      50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.1); }
+    }
+    
+    .container.waiting .question-mark {
+      display: block;
+    }
+    
+    .question-mark {
+      display: none;
+      position: absolute;
+      top: 15%;
+      right: 20%;
+      font-size: 28px;
+      color: #88ccff;
+      text-shadow: 0 0 10px rgba(136, 204, 255, 0.8);
+      animation: floatQuestion 2s ease-in-out infinite;
+      z-index: 10;
+    }
+    
+    @keyframes floatQuestion {
+      0%, 100% { transform: translateY(0) rotate(-5deg); opacity: 0.7; }
+      50% { transform: translateY(-8px) rotate(5deg); opacity: 1; }
+    }
+    
+    /* Waiting nudge animation - plays every 5 min as reminder */
+    .container.waiting.nudge .eye {
+      animation: nudgeBounce 0.6s ease-out;
+    }
+    
+    .container.waiting.nudge .question-mark {
+      animation: nudgeQuestion 0.8s ease-out;
+    }
+    
+    @keyframes nudgeBounce {
+      0%, 100% { transform: translateY(-8px); }
+      25% { transform: translateY(-20px); }
+      50% { transform: translateY(-5px); }
+      75% { transform: translateY(-12px); }
+    }
+    
+    @keyframes nudgeQuestion {
+      0% { transform: translateY(0) rotate(-5deg) scale(1); opacity: 0.7; }
+      30% { transform: translateY(-15px) rotate(10deg) scale(1.4); opacity: 1; }
+      60% { transform: translateY(-5px) rotate(-8deg) scale(1.1); opacity: 1; }
+      100% { transform: translateY(0) rotate(-5deg) scale(1); opacity: 0.7; }
+    }
+    
+    /* TIRED LEVEL 1 (7:30pm - 9:30pm) - Slightly tired */
+    .container.tired-1 .eye {
+      height: 36px;
+      border-radius: 12px 12px 18px 18px;
+    }
+    
+    .container.tired-1 .eyelid {
+      height: 20%;
+      background: linear-gradient(180deg, #0a0a1a 0%, transparent 100%);
+      border-radius: 0 0 50% 50%;
+    }
+    
+    .container.tired-1 .pupil {
+      height: 12px;
+      opacity: 0.85;
+      top: 55%;
+    }
+    
+    .container.tired-1 .ambient {
+      opacity: 0.4;
+    }
+    
+    .container.tired-1 .status-dot {
+      animation-duration: 3s;
+    }
+    
+    /* TIRED LEVEL 2 (9:30pm - 11:30pm) - Getting sleepy */
+    .container.tired-2 .eye {
+      height: 28px;
+      border-radius: 8px 8px 22px 22px;
+      border-color: #3a3a7a;
+    }
+    
+    .container.tired-2 .eyelid {
+      height: 35%;
+      background: linear-gradient(180deg, #0a0a1a 0%, #0a0a1a 70%, transparent 100%);
+      border-radius: 0 0 50% 50%;
+    }
+    
+    .container.tired-2 .pupil {
+      height: 10px;
+      width: 12px;
+      opacity: 0.7;
+      top: 58%;
+      transition: all 0.3s ease-out;
+    }
+    
+    .container.tired-2 .ambient {
+      opacity: 0.3;
+      animation-duration: 6s;
+    }
+    
+    .container.tired-2 .status-dot {
+      animation-duration: 4s;
+      opacity: 0.6;
+    }
+    
+    /* Heavy blink for tired-2 */
+    .container.tired-2 .eye.heavy-blink .eyelid {
+      height: 100%;
+      transition: height 0.4s ease-in-out;
+    }
+    
+    /* TIRED LEVEL 3 (11:30pm - 7:00am) - Exhausted, curved arc eyes */
+    .container.tired-3 .eye {
+      height: 16px;
+      width: 48px;
+      border-radius: 4px 4px 24px 24px;
+      border-color: #2a2a5a;
+      background: transparent;
+      border-top: none;
+      border-width: 3px;
+      box-shadow: 0 0 8px rgba(100, 100, 255, 0.2);
+    }
+    
+    .container.tired-3 .eyelid {
+      display: none;
+    }
+    
+    .container.tired-3 .pupil {
+      display: none;
+    }
+    
+    .container.tired-3 .ambient {
+      opacity: 0.2;
+      animation-duration: 8s;
+    }
+    
+    .container.tired-3 .status-dot {
+      animation-duration: 5s;
+      opacity: 0.4;
+    }
+    
+    /* Snap awake - wide eyes (can be applied to any tired state) */
+    .container.snap-awake .eye {
+      height: 50px !important;
+      width: 50px !important;
+      border-radius: 10px !important;
+      border: 2px solid #8a8aff !important;
+      background: linear-gradient(180deg, #1a1a3a 0%, #0a0a1a 100%) !important;
+      box-shadow: 0 0 20px rgba(100, 100, 255, 0.6) !important;
+      transition: all 0.12s ease-out !important;
+    }
+    
+    .container.snap-awake .eyelid {
+      display: block !important;
+      height: 0 !important;
+    }
+    
+    .container.snap-awake .pupil {
+      display: block !important;
+      opacity: 1 !important;
+      height: 18px !important;
+      width: 18px !important;
+      top: 50% !important;
+      background: linear-gradient(135deg, #8a8aff 0%, #6a6aff 50%, #5a5aee 100%) !important;
+      box-shadow: 0 0 12px rgba(100, 100, 255, 1) !important;
+    }
+    
+    .container.snap-awake .zzz {
+      opacity: 0 !important;
+    }
+    
+    /* Floating Z's */
+    .zzz {
+      position: absolute;
+      top: -20px;
+      right: -30px;
+      font-size: 24px;
+      font-weight: bold;
+      color: #6a6aff;
+      opacity: 0;
+      text-shadow: 0 0 10px rgba(100, 100, 255, 0.5);
+      pointer-events: none;
+      font-family: 'Arial Rounded MT Bold', 'Helvetica', sans-serif;
+    }
+    
+    .container.tired-3 .zzz {
+      opacity: 0.7;
+      animation: floatZ 3s ease-in-out infinite;
+    }
+    
+    .container.tired-3.nodding .zzz {
+      opacity: 1;
+      animation: floatZ 2s ease-in-out infinite;
+    }
+    
+    @keyframes floatZ {
+      0%, 100% { transform: translateY(0) rotate(-5deg); opacity: 0.5; }
+      50% { transform: translateY(-10px) rotate(5deg); opacity: 1; }
+    }
+    
+    .zzz .z1 { font-size: 16px; }
+    .zzz .z2 { font-size: 22px; margin-left: 2px; }
+    .zzz .z3 { font-size: 14px; margin-left: 2px; animation: floatZ 2.5s ease-in-out infinite reverse; }
+    
+    /* Alert exclamation points for snap-awake */
+    .alert {
+      position: absolute;
+      top: -20px;
+      right: -40px;
+      font-size: 28px;
+      font-weight: bold;
+      color: #ff4444;
+      opacity: 0;
+      text-shadow: 0 0 15px rgba(255, 68, 68, 0.8), 0 0 30px rgba(255, 68, 68, 0.5);
+      pointer-events: none;
+      font-family: 'Arial Black', 'Helvetica', sans-serif;
+      transform: translate(0, 0);
+    }
+    
+    .container.snap-awake .alert {
+      opacity: 1;
+      animation: alertBurst 0.6s ease-out forwards;
+    }
+    
+    @keyframes alertBurst {
+      0% { 
+        transform: translate(-30px, 30px) scale(0.3); 
+        opacity: 0; 
+      }
+      30% { 
+        transform: translate(0, 0) scale(1.2); 
+        opacity: 1; 
+      }
+      50% { 
+        transform: translate(5px, -5px) scale(1); 
+      }
+      60% { transform: rotate(-8deg); }
+      70% { transform: rotate(8deg); }
+      80% { transform: rotate(-5deg); }
+      90% { transform: rotate(5deg); }
+      100% { transform: rotate(0deg); }
+    }
+    
+    .alert .ex1 { 
+      display: inline-block;
+    }
+    .alert .ex2 { 
+      display: inline-block;
+      font-size: 24px;
+      margin-left: 2px;
+    }
+    
+    .container.snap-awake .alert .ex1 {
+      animation: wobble1 0.15s ease-in-out 0.6s infinite;
+    }
+    .container.snap-awake .alert .ex2 {
+      animation: wobble2 0.15s ease-in-out 0.6s infinite;
+    }
+    
+    @keyframes wobble1 {
+      0%, 100% { transform: rotate(-3deg); }
+      50% { transform: rotate(3deg); }
+    }
+    @keyframes wobble2 {
+      0%, 100% { transform: rotate(3deg); }
+      50% { transform: rotate(-3deg); }
+    }
+    
+    /* Status indicator */
+    .status {
+      position: absolute;
+      bottom: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: #4a4aff;
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+      transition: all 0.3s ease;
+    }
+    
+    .container.celebrate .status-dot {
+      background: #ffaa00;
+      box-shadow: 0 0 10px rgba(255, 170, 0, 0.8);
+    }
+    
+    .container.error .status-dot {
+      background: #ff4444;
+      box-shadow: 0 0 10px rgba(255, 68, 68, 0.8);
+      animation: errorPulse 0.5s ease-in-out infinite;
+    }
+    
+    .container.listening .status-dot {
+      background: #66ffaa;
+      box-shadow: 0 0 10px rgba(100, 255, 170, 0.8);
+    }
+    
+    @keyframes errorPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    
+    .status-dot:nth-child(2) { animation-delay: 0.3s; }
+    .status-dot:nth-child(3) { animation-delay: 0.6s; }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1); }
+    }
+    
+    /* Connection indicator */
+    .connection {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 9px;
+      color: #4a4a6a;
+      letter-spacing: 1px;
+    }
+    
+    .connection-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #666;
+      transition: all 0.3s ease;
+    }
+    
+    .connection-dot.online {
+      background: #44ff88;
+      box-shadow: 0 0 8px rgba(68, 255, 136, 0.6);
+    }
+    
+    .connection-dot.busy {
+      background: #ffaa00;
+      box-shadow: 0 0 8px rgba(255, 170, 0, 0.6);
+      animation: busyPulse 1s ease-in-out infinite;
+    }
+    
+    .connection-dot.offline {
+      background: #ff4444;
+      box-shadow: 0 0 8px rgba(255, 68, 68, 0.4);
+    }
+    
+    @keyframes busyPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    /* Floating particles */
+    .particle {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      background: rgba(100, 100, 255, 0.5);
+      border-radius: 50%;
+      animation: float 8s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(-120px) translateX(20px); opacity: 0; }
+    }
+    
+    /* Weather particles container */
+    .weather-particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+    
+    /* Rain */
+    .rain-drop {
+      position: absolute;
+      width: 2px;
+      height: 15px;
+      background: linear-gradient(to bottom, transparent, rgba(100, 150, 255, 0.6));
+      animation: rain 0.8s linear infinite;
+    }
+    
+    @keyframes rain {
+      0% { transform: translateY(-20px); opacity: 0; }
+      10% { opacity: 1; }
+      100% { transform: translateY(100vh); opacity: 0.3; }
+    }
+    
+    /* Snow */
+    .snowflake {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: white;
+      border-radius: 50%;
+      opacity: 0.8;
+      animation: snow 4s linear infinite;
+      box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+    }
+    
+    @keyframes snow {
+      0% { transform: translateY(-20px) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.8; }
+      100% { transform: translateY(100vh) rotate(360deg); opacity: 0.3; }
+    }
+    
+    /* Hot shimmer */
+    .container.hot .ambient {
+      background: radial-gradient(circle, rgba(255, 100, 50, 0.35) 0%, rgba(255, 50, 0, 0.1) 50%, transparent 70%);
+      animation: heatShimmer 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes heatShimmer {
+      0%, 100% { transform: translate(-50%, -50%) scale(1) skewX(0deg); filter: blur(0px); }
+      25% { transform: translate(-50%, -50%) scale(1.1) skewX(2deg); filter: blur(1px); }
+      50% { transform: translate(-50%, -50%) scale(1.05) skewX(-1deg); filter: blur(0px); }
+      75% { transform: translate(-50%, -50%) scale(1.1) skewX(-2deg); filter: blur(1px); }
+    }
+    
+    .container.hot .eye {
+      border-color: #ff6633;
+      box-shadow: 
+        0 0 15px rgba(255, 100, 50, 0.6),
+        0 0 30px rgba(255, 50, 0, 0.3),
+        inset 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+    
+    .container.hot .pupil {
+      background: linear-gradient(135deg, #ff8844 0%, #ff5522 50%, #ee3300 100%);
+      box-shadow: 
+        0 0 10px rgba(255, 100, 50, 0.9),
+        0 0 20px rgba(255, 50, 0, 0.5);
+      animation: hotPupil 0.8s ease-in-out infinite;
+    }
+    
+    @keyframes hotPupil {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); }
+      50% { transform: translate(-50%, -50%) scale(1.1); }
+    }
+    
+    .container.hot .status-dot {
+      background: #ff5522;
+      box-shadow: 0 0 10px rgba(255, 85, 34, 0.8);
+    }
+    
+    /* Heat wave particles */
+    .heat-wave {
+      position: absolute;
+      width: 20px;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, rgba(255, 150, 100, 0.4), transparent);
+      border-radius: 50%;
+      animation: riseHeat 2s ease-out infinite;
+      filter: blur(1px);
+    }
+    
+    @keyframes riseHeat {
+      0% { transform: translateY(0) scaleX(1); opacity: 0; }
+      20% { opacity: 0.6; }
+      100% { transform: translateY(-100px) scaleX(1.5); opacity: 0; }
+    }
+    
+    /* Sweat drop */
+    .sweat {
+      position: absolute;
+      width: 6px;
+      height: 8px;
+      background: linear-gradient(180deg, rgba(100, 150, 255, 0.8), rgba(50, 100, 200, 0.6));
+      border-radius: 50% 50% 50% 50% / 30% 30% 70% 70%;
+      animation: sweatDrop 2s ease-in infinite;
+      opacity: 0;
+    }
+    
+    @keyframes sweatDrop {
+      0% { transform: translateY(0); opacity: 0; }
+      10% { opacity: 0.8; }
+      100% { transform: translateY(60px); opacity: 0; }
+    }
+    
+    /* Cold frost */
+    .container.cold .ambient {
+      background: radial-gradient(circle, rgba(150, 200, 255, 0.25) 0%, transparent 70%);
+    }
+    
+    .container.cold .eye {
+      border-color: #88ccff;
+      box-shadow: 0 0 15px rgba(136, 204, 255, 0.4);
+    }
+    
+    .container.cold .pupil {
+      background: linear-gradient(135deg, #88ccff 0%, #66aaff 50%, #4488ee 100%);
+    }
+    
+    /* Scan line effect */
+    .scanline {
+      position: absolute;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(100, 100, 255, 0.1), transparent);
+      animation: scan 4s linear infinite;
+      pointer-events: none;
+    }
+    
+    @keyframes scan {
+      0% { top: 0; }
+      100% { top: 100%; }
+    }
+    
+    /* THINKING MODE */
+    .container.thinking .ambient {
+      background: radial-gradient(circle, rgba(150, 100, 255, 0.25) 0%, transparent 70%);
+      animation: thinkPulse 1s ease-in-out infinite;
+    }
+    
+    @keyframes thinkPulse {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+      50% { transform: translate(-50%, -50%) scale(1.3); opacity: 0.9; }
+    }
+    
+    .container.thinking .eye {
+      border-color: #8a6aff;
+      box-shadow: 
+        0 0 15px rgba(150, 100, 255, 0.5),
+        inset 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+    
+    .container.thinking .pupil {
+      background: linear-gradient(135deg, #aa8aff 0%, #8a6aff 50%, #6a4aee 100%);
+      box-shadow: 
+        0 0 12px rgba(150, 100, 255, 0.9),
+        0 0 20px rgba(150, 100, 255, 0.5);
+      animation: thinkLook 2s ease-in-out infinite;
+    }
+    
+    @keyframes thinkLook {
+      0%, 100% { transform: translate(calc(-50% - 5px), calc(-50% - 6px)); }
+      25% { transform: translate(calc(-50% + 5px), calc(-50% - 4px)); }
+      50% { transform: translate(calc(-50% + 3px), calc(-50% - 8px)); }
+      75% { transform: translate(calc(-50% - 6px), calc(-50% - 5px)); }
+    }
+    
+    .container.thinking .status-dot {
+      background: #8a6aff;
+      animation: thinkDots 0.6s ease-in-out infinite;
+    }
+    
+    .container.thinking .status-dot:nth-child(2) { animation-delay: 0.2s; }
+    .container.thinking .status-dot:nth-child(3) { animation-delay: 0.4s; }
+    
+    @keyframes thinkDots {
+      0%, 100% { transform: scale(0.8); opacity: 0.4; }
+      50% { transform: scale(1.3); opacity: 1; }
+    }
+    
+    /* Processing text stream */
+    .processing {
+      position: absolute;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 9px;
+      color: #6a5a9a;
+      letter-spacing: 1px;
+      font-family: 'Courier New', monospace;
+      opacity: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      transition: opacity 0.3s ease;
+    }
+    
+    .container.thinking .processing {
+      opacity: 1;
+      animation: typeText 2s steps(20) infinite;
+    }
+    
+    @keyframes typeText {
+      0%, 100% { width: 0; }
+      50% { width: 180px; }
+    }
+    
+    /* Scanning line for thinking */
+    .container.thinking .scanline {
+      background: linear-gradient(90deg, transparent, rgba(150, 100, 255, 0.3), transparent);
+      animation: scan 1.5s linear infinite;
+    }
+    
+    /* THINKING + TIRED-1 COMBO (thinking after 7:30pm) */
+    .container.thinking.tired-1 .eye {
+      height: 38px;
+      border-radius: 10px 10px 16px 16px;
+      border-color: #7a5aaa;
+    }
+    
+    .container.thinking.tired-1 .eyelid {
+      height: 18%;
+      background: linear-gradient(180deg, #0a0a1a 0%, transparent 100%);
+    }
+    
+    .container.thinking.tired-1 .pupil {
+      height: 12px;
+      top: 54%;
+    }
+    
+    .container.thinking.tired-1 .ambient {
+      opacity: 0.5;
+    }
+    
+    /* THINKING + TIRED-2 COMBO (thinking after 9:30pm) */
+    .container.thinking.tired-2 .eye {
+      height: 32px;
+      border-radius: 8px 8px 20px 20px;
+      border-color: #6a4a9a;
+    }
+    
+    .container.thinking.tired-2 .eyelid {
+      height: 30%;
+      background: linear-gradient(180deg, #0a0a1a 0%, #0a0a1a 60%, transparent 100%);
+    }
+    
+    .container.thinking.tired-2 .pupil {
+      height: 10px;
+      width: 12px;
+      top: 56%;
+    }
+    
+    .container.thinking.tired-2 .ambient {
+      opacity: 0.4;
+    }
+    
+    /* Fireworks container */
+    .fireworks {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 100;
+    }
+    
+    .spark {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      animation: spark 1.2s ease-out forwards;
+    }
+    
+    @keyframes spark {
+      0% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    
+    /* Celebration text */
+    .celebration-text {
+      position: absolute;
+      top: 35%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      font-size: 32px;
+      font-weight: bold;
+      color: #ffcc00;
+      text-shadow: 
+        0 0 10px rgba(255, 200, 0, 0.8),
+        0 0 20px rgba(255, 150, 0, 0.6),
+        0 0 40px rgba(255, 100, 0, 0.4);
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 50;
+      white-space: nowrap;
+    }
+    
+    .celebration-text.show {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+      animation: celebText 0.5s ease-out;
+    }
+    
+    @keyframes celebText {
+      0% { transform: translate(-50%, -50%) scale(0) rotate(-10deg); }
+      50% { transform: translate(-50%, -50%) scale(1.2) rotate(5deg); }
+      100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+    }
+    
+    /* Click hint */
+    .hint {
+      position: absolute;
+      bottom: 20px;
+      font-size: 10px;
+      color: #3a3a6a;
+      letter-spacing: 1px;
+    }
+    
+    /* Mood indicator */
+    .mood {
+      position: absolute;
+      top: 90px;
+      font-size: 11px;
+      color: #4a4a8a;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      opacity: 0.7;
+      transition: all 0.3s ease;
+    }
+    
+    /* Time display */
+    .time-display {
+      position: absolute;
+      bottom: 45px;
+      font-size: 9px;
+      color: #3a3a5a;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+  <div class="title">
+    MOTMEISTER
+    <span class="version">THE SECOND</span>
+  </div>
+  
+  <div class="connection">
+    <div class="connection-dot" id="connectionDot"></div>
+    <span id="connectionText">OFFLINE</span>
+  </div>
+  
+  <div class="mood" id="mood">STATUS: VIBING</div>
+  
+  <div class="fireworks" id="fireworks"></div>
+  <div class="weather-particles" id="weatherParticles"></div>
+  <div class="celebration-text" id="celebText">🎉 NICE! 🎉</div>
+  
+  <div class="container" id="container">
+    <div class="ambient"></div>
+    <div class="scanline"></div>
+    <div class="question-mark" id="questionMark">?</div>
+    
+    <!-- Floating particles -->
+    <div class="particle" style="left: 15%; top: 85%; animation-delay: 0s;"></div>
+    <div class="particle" style="left: 75%; top: 80%; animation-delay: 2s;"></div>
+    <div class="particle" style="left: 35%; top: 90%; animation-delay: 4s;"></div>
+    <div class="particle" style="left: 55%; top: 85%; animation-delay: 6s;"></div>
+    <div class="particle" style="left: 85%; top: 88%; animation-delay: 1s;"></div>
+    
+    <div class="face" id="face">
+      <div class="eyes">
+        <div class="eye" id="leftEye">
+          <div class="eyelid"></div>
+          <div class="pupil" id="leftPupil"></div>
+        </div>
+        <div class="eye" id="rightEye">
+          <div class="eyelid"></div>
+          <div class="pupil" id="rightPupil"></div>
+        </div>
+      </div>
+      <div class="zzz" id="zzz"><span class="z1">z</span><span class="z2">Z</span><span class="z3">z</span></div>
+      <div class="alert" id="alert"><span class="ex1">!</span><span class="ex2">!</span></div>
+      <div class="status">
+        <div class="status-dot"></div>
+        <div class="status-dot"></div>
+        <div class="status-dot"></div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="processing" id="processing">processing query...</div>
+  <div class="time-display" id="timeDisplay"></div>
+
+  <script>
+    const leftPupil = document.getElementById('leftPupil');
+    const rightPupil = document.getElementById('rightPupil');
+    const leftEye = document.getElementById('leftEye');
+    const rightEye = document.getElementById('rightEye');
+    const face = document.getElementById('face');
+    const container = document.getElementById('container');
+    const fireworksContainer = document.getElementById('fireworks');
+    const weatherContainer = document.getElementById('weatherParticles');
+    const celebText = document.getElementById('celebText');
+    const moodEl = document.getElementById('mood');
+    const connectionDot = document.getElementById('connectionDot');
+    const connectionText = document.getElementById('connectionText');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const processingEl = document.getElementById('processing');
+    
+    const celebrationPhrases = [
+      "🎉 NICE! 🎉",
+      "🔥 LET'S GO! 🔥",
+      "⚡ CRUSHED IT! ⚡",
+      "🚀 SHIPPED! 🚀",
+      "✨ BEAUTIFUL! ✨",
+      "💪 GOT 'EM! 💪",
+      "🎯 BULLSEYE! 🎯",
+      "🏆 WINNER! 🏆"
+    ];
+    
+    const processingTexts = [
+      'processing query...',
+      'analyzing request...',
+      'thinking deeply...',
+      'searching memory...',
+      'formulating response...',
+      'crunching data...',
+      'connecting dots...',
+      'brewing thoughts...'
+    ];
+    
+    let thinkingInterval = null;
+    let currentWeather = null;
+    let heavyBlinkInterval = null;
+    let currentTiredLevel = 0;
+    let lastInputTime = Date.now(); // Track last input
+    const IDLE_THRESHOLD_MS = 10 * 60 * 1000; // 10 minutes
+    
+    // Clear all tired states
+    function clearTiredStates() {
+      container.classList.remove('tired-1', 'tired-2', 'tired-3', 'snap-awake');
+      if (heavyBlinkInterval) {
+        clearInterval(heavyBlinkInterval);
+        heavyBlinkInterval = null;
+      }
+    }
+    
+    // Heavy blink for tired-2
+    function doHeavyBlink() {
+      if (!container.classList.contains('tired-2') || container.classList.contains('thinking')) return;
+      leftEye.classList.add('heavy-blink');
+      rightEye.classList.add('heavy-blink');
+      setTimeout(() => {
+        leftEye.classList.remove('heavy-blink');
+        rightEye.classList.remove('heavy-blink');
+      }, 800);
+    }
+    
+    // Get current tired level based on time (not input idle)
+    function getTimeTiredLevel() {
+      const now = new Date();
+      const hour = now.getHours();
+      const minute = now.getMinutes();
+      const timeMinutes = hour * 60 + minute;
+      
+      const TIRED_1_START = 19 * 60 + 30;  // 7:30pm
+      const TIRED_2_START = 21 * 60 + 30;  // 9:30pm
+      const TIRED_3_START = 23 * 60 + 30;  // 11:30pm
+      const WAKE_UP = 7 * 60;              // 7:00am
+      
+      if (timeMinutes >= TIRED_3_START || timeMinutes < WAKE_UP) {
+        return 3; // Could be level 3, but needs idle check
+      } else if (timeMinutes >= TIRED_2_START) {
+        return 2;
+      } else if (timeMinutes >= TIRED_1_START) {
+        return 1;
+      }
+      return 0;
+    }
+    
+    // Check if idle long enough for level 3
+    function isIdleForLevel3() {
+      return (Date.now() - lastInputTime) >= IDLE_THRESHOLD_MS;
+    }
+    
+    // Register input (resets idle timer)
+    function registerInput() {
+      const wasInTired3 = container.classList.contains('tired-3');
+      lastInputTime = Date.now();
+      
+      // If was in tired-3, do snap awake first
+      if (wasInTired3) {
+        return true; // Signal to caller that snap-awake should happen
+      }
+      return false;
+    }
+    
+    // Time-aware tiredness
+    function updateTimeAwareness() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      timeDisplay.textContent = timeStr;
+      
+      // Only apply tiredness if no priority state is active
+      const hasState = container.classList.contains('thinking') || 
+                       container.classList.contains('celebrate') ||
+                       container.classList.contains('error') ||
+                       container.classList.contains('listening') ||
+                       container.classList.contains('hot') ||
+                       container.classList.contains('snap-awake');
+      
+      if (hasState) return;
+      
+      let timeTiredLevel = getTimeTiredLevel();
+      let newTiredLevel = timeTiredLevel;
+      
+      // Level 3 requires BOTH late time AND idle for 10 min
+      if (timeTiredLevel === 3 && !isIdleForLevel3()) {
+        newTiredLevel = 2; // Fall back to level 2 if not idle enough
+      }
+      
+      // Only update if level changed
+      if (newTiredLevel !== currentTiredLevel) {
+        clearTiredStates();
+        currentTiredLevel = newTiredLevel;
+        
+        if (newTiredLevel === 1) {
+          container.classList.add('tired-1');
+          moodEl.textContent = 'STATUS: getting tired...';
+          moodEl.style.color = '#5a5a9a';
+        } else if (newTiredLevel === 2) {
+          container.classList.add('tired-2');
+          moodEl.textContent = 'STATUS: sleepy...';
+          moodEl.style.color = '#4a4a7a';
+          // Start occasional heavy blinks
+          heavyBlinkInterval = setInterval(() => {
+            if (Math.random() < 0.3) doHeavyBlink();
+          }, 8000);
+        } else if (newTiredLevel === 3) {
+          container.classList.add('tired-3');
+          moodEl.textContent = 'STATUS: zzz...';
+          moodEl.style.color = '#3a3a5a';
+        } else {
+          // Awake!
+          moodEl.textContent = 'STATUS: VIBING';
+          moodEl.style.color = '#4a4a8a';
+        }
+      }
+    }
+    
+    setInterval(updateTimeAwareness, 60000);
+    updateTimeAwareness();
+    
+    // Mouse tracking
+    document.addEventListener('mousemove', (e) => {
+      if (container.classList.contains('celebrate') || 
+          container.classList.contains('thinking') ||
+          container.classList.contains('error')) return;
+      
+      const rect = face.getBoundingClientRect();
+      const faceCenterX = rect.left + rect.width / 2;
+      const faceCenterY = rect.top + rect.height / 2;
+      
+      const deltaX = (e.clientX - faceCenterX) / 50;
+      const deltaY = (e.clientY - faceCenterY) / 50;
+      
+      const maxMove = 8;
+      const moveX = Math.max(-maxMove, Math.min(maxMove, deltaX));
+      const moveY = Math.max(-maxMove, Math.min(maxMove, deltaY));
+      
+      leftPupil.style.transform = `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px))`;
+      rightPupil.style.transform = `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px))`;
+    });
+    
+    // Random blinking
+    function blink() {
+      if (container.classList.contains('celebrate') || container.classList.contains('error')) {
+        setTimeout(blink, 2000 + Math.random() * 4000);
+        return;
+      }
+      
+      leftEye.classList.add('blink');
+      rightEye.classList.add('blink');
+      
+      setTimeout(() => {
+        leftEye.classList.remove('blink');
+        rightEye.classList.remove('blink');
+      }, 150);
+      
+      const nextBlink = 2000 + Math.random() * 4000;
+      setTimeout(blink, nextBlink);
+    }
+    
+    setTimeout(blink, 1000);
+    
+    // Idle look around
+    let idleTimer;
+    function resetIdleTimer() {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(idleLook, 5000);
+    }
+    
+    function idleLook() {
+      if (container.classList.contains('celebrate') || 
+          container.classList.contains('thinking') ||
+          container.classList.contains('error')) {
+        setTimeout(idleLook, 4000 + Math.random() * 4000);
+        return;
+      }
+      
+      const randomX = (Math.random() - 0.5) * 12;
+      const randomY = (Math.random() - 0.5) * 8;
+      
+      leftPupil.style.transform = `translate(calc(-50% + ${randomX}px), calc(-50% + ${randomY}px))`;
+      rightPupil.style.transform = `translate(calc(-50% + ${randomX}px), calc(-50% + ${randomY}px))`;
+      
+      setTimeout(() => {
+        leftPupil.style.transform = 'translate(-50%, -50%)';
+        rightPupil.style.transform = 'translate(-50%, -50%)';
+      }, 800);
+      
+      setTimeout(idleLook, 4000 + Math.random() * 4000);
+    }
+    
+    document.addEventListener('mousemove', resetIdleTimer);
+    setTimeout(idleLook, 5000);
+    
+    // Fireworks
+    function createFirework(x, y, mega = false) {
+      const colors = ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#ff6eb4', '#a855f7', '#f97316'];
+      const particleCount = mega ? 40 : 20;
+      
+      for (let i = 0; i < particleCount; i++) {
+        const spark = document.createElement('div');
+        spark.className = 'spark';
+        spark.style.left = x + 'px';
+        spark.style.top = y + 'px';
+        spark.style.background = colors[Math.floor(Math.random() * colors.length)];
+        spark.style.boxShadow = `0 0 6px ${spark.style.background}`;
+        
+        const angle = (Math.PI * 2 / particleCount) * i;
+        const velocity = mega ? 150 + Math.random() * 100 : 80 + Math.random() * 60;
+        const vx = Math.cos(angle) * velocity;
+        const vy = Math.sin(angle) * velocity;
+        
+        spark.animate([
+          { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+          { transform: `translate(${vx}px, ${vy}px) scale(0)`, opacity: 0 }
+        ], {
+          duration: mega ? 1500 : 1000,
+          easing: 'cubic-bezier(0, 0.5, 0.5, 1)'
+        });
+        
+        fireworksContainer.appendChild(spark);
+        setTimeout(() => spark.remove(), mega ? 1500 : 1000);
+      }
+    }
+    
+    // Weather effects
+    let hotInterval = null;
+    
+    function setWeather(type) {
+      // Clear existing weather
+      weatherContainer.innerHTML = '';
+      currentWeather = type;
+      container.classList.remove('hot', 'cold');
+      if (hotInterval) {
+        clearInterval(hotInterval);
+        hotInterval = null;
+      }
+      // Remove any sweat drops
+      document.querySelectorAll('.sweat').forEach(el => el.remove());
+      document.querySelectorAll('.heat-wave').forEach(el => el.remove());
+      
+      if (type === 'rain') {
+        for (let i = 0; i < 50; i++) {
+          const drop = document.createElement('div');
+          drop.className = 'rain-drop';
+          drop.style.left = Math.random() * 100 + '%';
+          drop.style.animationDelay = Math.random() * 2 + 's';
+          drop.style.animationDuration = (0.5 + Math.random() * 0.5) + 's';
+          weatherContainer.appendChild(drop);
+        }
+      } else if (type === 'snow') {
+        for (let i = 0; i < 30; i++) {
+          const flake = document.createElement('div');
+          flake.className = 'snowflake';
+          flake.style.left = Math.random() * 100 + '%';
+          flake.style.animationDelay = Math.random() * 4 + 's';
+          flake.style.animationDuration = (3 + Math.random() * 2) + 's';
+          flake.style.width = (4 + Math.random() * 4) + 'px';
+          flake.style.height = flake.style.width;
+          weatherContainer.appendChild(flake);
+        }
+      } else if (type === 'hot') {
+        container.classList.add('hot');
+        startHotEffects();
+      } else if (type === 'cold') {
+        container.classList.add('cold');
+      }
+    }
+    
+    function startHotEffects() {
+      // Add sweat drop to face
+      const sweat = document.createElement('div');
+      sweat.className = 'sweat';
+      sweat.style.left = '85px';
+      sweat.style.top = '15px';
+      face.appendChild(sweat);
+      
+      // Create heat waves rising from bottom
+      function createHeatWave() {
+        const wave = document.createElement('div');
+        wave.className = 'heat-wave';
+        wave.style.left = (30 + Math.random() * 40) + '%';
+        wave.style.bottom = '10%';
+        wave.style.animationDelay = Math.random() * 0.5 + 's';
+        container.appendChild(wave);
+        setTimeout(() => wave.remove(), 2000);
+      }
+      
+      // Create waves periodically
+      createHeatWave();
+      hotInterval = setInterval(() => {
+        if (container.classList.contains('hot')) {
+          createHeatWave();
+        }
+      }, 400);
+    }
+    
+    function clearWeather() {
+      weatherContainer.innerHTML = '';
+      container.classList.remove('hot', 'cold');
+      currentWeather = null;
+      if (hotInterval) {
+        clearInterval(hotInterval);
+        hotInterval = null;
+      }
+      document.querySelectorAll('.sweat').forEach(el => el.remove());
+      document.querySelectorAll('.heat-wave').forEach(el => el.remove());
+    }
+    
+    // Clear states helper (keeps tired classes for thinking combo)
+    function clearStates(keepTired = false) {
+      container.classList.remove('celebrate', 'happy', 'thinking', 'error', 
+                                  'listening', 'skeptical', 'curious', 'snap-awake', 'waiting');
+      if (!keepTired) {
+        container.classList.remove('tired-1', 'tired-2', 'tired-3');
+      }
+      if (thinkingInterval) {
+        clearInterval(thinkingInterval);
+        thinkingInterval = null;
+      }
+      if (heavyBlinkInterval) {
+        clearInterval(heavyBlinkInterval);
+        heavyBlinkInterval = null;
+      }
+      if (!keepTired) {
+        currentTiredLevel = -1; // Force re-evaluation on next update
+      }
+    }
+    
+    // Celebration function
+    function celebrate(mega = false) {
+      registerInput(); // Celebrate counts as input
+      clearStates();
+      container.classList.add('celebrate');
+      if (mega) container.classList.add('happy');
+      
+      moodEl.textContent = mega ? 'STATUS: 🔥 ON FIRE 🔥' : 'STATUS: CELEBRATING';
+      moodEl.style.color = '#ffaa00';
+      
+      celebText.textContent = celebrationPhrases[Math.floor(Math.random() * celebrationPhrases.length)];
+      celebText.classList.add('show');
+      
+      setConnection('online');
+      
+      const bursts = mega ? 8 : 4;
+      for (let i = 0; i < bursts; i++) {
+        setTimeout(() => {
+          const x = Math.random() * window.innerWidth;
+          const y = Math.random() * (window.innerHeight * 0.6);
+          createFirework(x, y, mega);
+        }, i * (mega ? 200 : 300));
+      }
+      
+      setTimeout(() => {
+        container.classList.remove('celebrate', 'happy');
+        celebText.classList.remove('show');
+        currentTiredLevel = -1; // Force re-evaluation
+        updateTimeAwareness();
+      }, mega ? 4000 : 2500);
+    }
+    
+    // Connection status
+    function setConnection(status) {
+      connectionDot.classList.remove('online', 'busy', 'offline');
+      connectionDot.classList.add(status);
+      connectionText.textContent = status.toUpperCase();
+    }
+    
+    // Expose functions globally
+    window.motmeister = {
+      celebrate: (mega) => celebrate(mega),
+      
+      setMood: (text) => {
+        moodEl.textContent = 'STATUS: ' + text.toUpperCase();
+      },
+      
+      happy: () => {
+        clearStates();
+        container.classList.add('happy');
+        moodEl.textContent = 'STATUS: HAPPY';
+        moodEl.style.color = '#ffaa00';
+        setTimeout(() => {
+          container.classList.remove('happy');
+          currentTiredLevel = -1; // Force re-evaluation
+          updateTimeAwareness();
+        }, 3000);
+      },
+      
+      // Thinking mode - with tired combos and snap-awake
+      think: () => {
+        const wasInTired3 = registerInput();
+        
+        // If was sleeping (tired-3), do snap awake first
+        if (wasInTired3) {
+          clearStates();
+          container.classList.add('snap-awake');
+          moodEl.textContent = 'STATUS: !?';
+          moodEl.style.color = '#8a8aff';
+          setConnection('online');
+          
+          // After 1.5 seconds, transition to thinking
+          setTimeout(() => {
+            container.classList.remove('snap-awake');
+            startThinking();
+          }, 1500);
+        } else {
+          clearStates(true); // Keep tired classes for combo
+          startThinking();
+        }
+        
+        function startThinking() {
+          container.classList.add('thinking');
+          
+          // Apply tired combo based on current time
+          const tiredLevel = getTimeTiredLevel();
+          container.classList.remove('tired-1', 'tired-2', 'tired-3');
+          
+          if (tiredLevel >= 2) {
+            container.classList.add('tired-2');
+            moodEl.textContent = 'STATUS: *yawn* THINKING...';
+            moodEl.style.color = '#6a4a9a';
+          } else if (tiredLevel === 1) {
+            container.classList.add('tired-1');
+            moodEl.textContent = 'STATUS: THINKING...';
+            moodEl.style.color = '#7a5aaa';
+          } else {
+            moodEl.textContent = 'STATUS: THINKING...';
+            moodEl.style.color = '#8a6aff';
+          }
+          
+          setConnection('busy');
+          
+          let textIndex = 0;
+          processingEl.textContent = processingTexts[0];
+          thinkingInterval = setInterval(() => {
+            textIndex = (textIndex + 1) % processingTexts.length;
+            processingEl.textContent = processingTexts[textIndex];
+          }, 2000);
+        }
+      },
+      
+      stopThinking: () => {
+        container.classList.remove('thinking', 'tired-1', 'tired-2');
+        setConnection('online');
+        if (thinkingInterval) {
+          clearInterval(thinkingInterval);
+          thinkingInterval = null;
+        }
+        currentTiredLevel = -1; // Force re-evaluation
+        updateTimeAwareness();
+      },
+      
+      thinking: (duration = 2000) => {
+        window.motmeister.think();
+        setTimeout(() => window.motmeister.stopThinking(), duration);
+      },
+      
+      working: () => window.motmeister.think(),
+      done: () => window.motmeister.stopThinking(),
+      isThinking: () => container.classList.contains('thinking'),
+      
+      // Error state
+      error: (duration = 3000) => {
+        clearStates();
+        container.classList.add('error');
+        moodEl.textContent = 'STATUS: ERROR';
+        moodEl.style.color = '#ff4444';
+        setConnection('offline');
+        
+        if (duration > 0) {
+          setTimeout(() => {
+            container.classList.remove('error');
+            setConnection('online');
+            currentTiredLevel = -1;
+            updateTimeAwareness();
+          }, duration);
+        }
+      },
+      
+      // Listening state
+      listening: (duration = 2000) => {
+        clearStates();
+        container.classList.add('listening');
+        moodEl.textContent = 'STATUS: LISTENING';
+        moodEl.style.color = '#66ffaa';
+        setConnection('online');
+        
+        setTimeout(() => {
+          container.classList.remove('listening');
+          currentTiredLevel = -1;
+          updateTimeAwareness();
+        }, duration);
+      },
+      
+      // Skeptical state
+      skeptical: (duration = 3000) => {
+        clearStates();
+        container.classList.add('skeptical');
+        moodEl.textContent = 'STATUS: SKEPTICAL';
+        moodEl.style.color = '#aa8866';
+        
+        setTimeout(() => {
+          container.classList.remove('skeptical');
+          currentTiredLevel = -1;
+          updateTimeAwareness();
+        }, duration);
+      },
+      
+      // Curious state
+      curious: (duration = 3000) => {
+        clearStates();
+        container.classList.add('curious');
+        moodEl.textContent = 'STATUS: CURIOUS';
+        moodEl.style.color = '#aa88ff';
+        
+        setTimeout(() => {
+          container.classList.remove('curious');
+          currentTiredLevel = -1;
+          updateTimeAwareness();
+        }, duration);
+      },
+      
+      // Waiting/Inquisitive state - when waiting for human response
+      waiting: () => {
+        clearStates();
+        container.classList.add('waiting');
+        moodEl.textContent = 'STATUS: WAITING...';
+        moodEl.style.color = '#88ccff';
+        setConnection('online');
+        
+        // Clear any existing nudge timer
+        if (window._waitingNudgeTimer) {
+          clearInterval(window._waitingNudgeTimer);
+        }
+        
+        // Set up 5-minute nudge reminder
+        window._waitingNudgeTimer = setInterval(() => {
+          if (container.classList.contains('waiting')) {
+            // Trigger nudge animation
+            container.classList.add('nudge');
+            moodEl.textContent = 'STATUS: STILL WAITING...';
+            
+            // Remove nudge class after animation completes
+            setTimeout(() => {
+              container.classList.remove('nudge');
+              moodEl.textContent = 'STATUS: WAITING...';
+            }, 1000);
+          }
+        }, 5 * 60 * 1000); // 5 minutes
+      },
+      
+      stopWaiting: () => {
+        container.classList.remove('waiting', 'nudge');
+        if (window._waitingNudgeTimer) {
+          clearInterval(window._waitingNudgeTimer);
+          window._waitingNudgeTimer = null;
+        }
+        currentTiredLevel = -1;
+        updateTimeAwareness();
+      },
+      
+      isWaiting: () => container.classList.contains('waiting'),
+      
+      // Force a nudge now (for testing)
+      nudge: () => {
+        if (container.classList.contains('waiting')) {
+          container.classList.add('nudge');
+          moodEl.textContent = 'STATUS: STILL WAITING...';
+          setTimeout(() => {
+            container.classList.remove('nudge');
+            moodEl.textContent = 'STATUS: WAITING...';
+          }, 1000);
+        }
+      },
+      
+      // Hot state (direct access)
+      hot: (duration = 0) => {
+        clearWeather();
+        setWeather('hot');
+        moodEl.textContent = 'STATUS: 🔥 HOT 🔥';
+        moodEl.style.color = '#ff5522';
+        
+        if (duration > 0) {
+          setTimeout(() => {
+            clearWeather();
+            currentTiredLevel = -1;
+            updateTimeAwareness();
+          }, duration);
+        }
+      },
+      
+      // Weather
+      weather: {
+        rain: () => { clearWeather(); setWeather('rain'); moodEl.textContent = 'STATUS: 🌧️ RAINY'; moodEl.style.color = '#6688cc'; },
+        snow: () => { clearWeather(); setWeather('snow'); moodEl.textContent = 'STATUS: ❄️ SNOWY'; moodEl.style.color = '#88ccff'; },
+        hot: () => window.motmeister.hot(),
+        cold: () => { clearWeather(); setWeather('cold'); moodEl.textContent = 'STATUS: 🥶 COLD'; moodEl.style.color = '#88ccff'; },
+        clear: () => { clearWeather(); currentTiredLevel = -1; updateTimeAwareness(); }
+      },
+      
+      // Connection
+      online: () => setConnection('online'),
+      offline: () => setConnection('offline'),
+      busy: () => setConnection('busy'),
+      
+      // Input registration (call this when receiving input)
+      input: () => {
+        const wasAsleep = registerInput();
+        if (wasAsleep) {
+          // If was in tired-3, snap awake briefly
+          clearStates();
+          container.classList.add('snap-awake');
+          moodEl.textContent = 'STATUS: !?';
+          setTimeout(() => {
+            container.classList.remove('snap-awake');
+            currentTiredLevel = -1;
+            updateTimeAwareness();
+          }, 1500);
+        }
+      },
+      
+      // Force tired-3 for testing (simulates 10 min idle after 11:30pm)
+      sleep: () => {
+        lastInputTime = Date.now() - IDLE_THRESHOLD_MS - 1000; // Set input time to 10+ min ago
+        clearStates();
+        container.classList.add('tired-3');
+        currentTiredLevel = 3;
+        moodEl.textContent = 'STATUS: zzz...';
+        moodEl.style.color = '#3a3a5a';
+      },
+      
+      // Debug: get current state
+      debug: () => ({
+        tiredLevel: currentTiredLevel,
+        timeTiredLevel: getTimeTiredLevel(),
+        isIdle: isIdleForLevel3(),
+        idleMs: Date.now() - lastInputTime,
+        classes: container.className
+      })
+    };
+    
+    // Click handlers
+    container.addEventListener('click', (e) => {
+      if (e.detail === 1) {
+        setTimeout(() => {
+          if (e.detail === 1) celebrate(false);
+        }, 200);
+      }
+    });
+    
+    container.addEventListener('dblclick', () => {
+      celebrate(true);
+    });
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'c') celebrate(false);
+      if (e.key === 'C') celebrate(true);
+      if (e.key === 'h') window.motmeister.happy();
+      if (e.key === 't') {
+        if (window.motmeister.isThinking()) {
+          window.motmeister.stopThinking();
+        } else {
+          window.motmeister.think();
+        }
+      }
+      if (e.key === 'e') window.motmeister.error();
+      if (e.key === 'l') window.motmeister.listening();
+      if (e.key === 's') window.motmeister.skeptical();
+      if (e.key === 'u') window.motmeister.curious();
+      if (e.key === 'r') window.motmeister.weather.rain();
+      if (e.key === 'n') window.motmeister.weather.snow();
+      if (e.key === 'o') window.motmeister.hot();
+      if (e.key === 'w') window.motmeister.weather.clear();
+    });
+    
+    // Initialize as online
+    setConnection('online');
+    
+    // === WebSocket Connection for Remote Control ===
+    const WS_URL = 'ws://127.0.0.1:3845';
+    let ws = null;
+    let wsReconnectTimer = null;
+    
+    function connectWebSocket() {
+      try {
+        ws = new WebSocket(WS_URL);
+        
+        ws.onopen = () => {
+          console.log('🔌 Connected to MotMeister server');
+          // Brief green flash on connection
+          container.style.transition = 'box-shadow 0.3s ease';
+          container.style.boxShadow = '0 0 30px rgba(0, 255, 100, 0.5)';
+          setTimeout(() => {
+            container.style.boxShadow = '';
+          }, 500);
+        };
+        
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.command) {
+              console.log('📩 Received command:', data.command);
+              // Execute the command on window.motmeister
+              try {
+                const fn = new Function('motmeister', `return motmeister.${data.command}`);
+                fn(window.motmeister);
+              } catch (e) {
+                console.error('Failed to execute command:', e);
+              }
+            }
+          } catch (e) {
+            console.error('Invalid message:', e);
+          }
+        };
+        
+        ws.onclose = () => {
+          console.log('🔌 Disconnected from server, reconnecting in 3s...');
+          ws = null;
+          wsReconnectTimer = setTimeout(connectWebSocket, 3000);
+        };
+        
+        ws.onerror = (err) => {
+          console.log('WebSocket error (server may not be running)');
+          ws.close();
+        };
+      } catch (e) {
+        console.log('Could not connect to server, retrying in 5s...');
+        wsReconnectTimer = setTimeout(connectWebSocket, 5000);
+      }
+    }
+    
+    // Start WebSocket connection
+    connectWebSocket();
+  </script>
+</body>
+</html>

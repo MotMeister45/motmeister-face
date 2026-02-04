@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 512px;
+      height: 512px;
+      background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #0d0d2a 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+    .container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .ambient {
+      position: absolute;
+      width: 350px;
+      height: 350px;
+      background: radial-gradient(circle, rgba(100, 100, 255, 0.2) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    .face {
+      display: flex;
+      gap: 30px;
+      z-index: 1;
+    }
+    .eye {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(180deg, #1a1a3a 0%, #0a0a1a 100%);
+      border: 3px solid #4a4a8a;
+      border-radius: 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 
+        0 0 20px rgba(100, 100, 255, 0.4),
+        inset 0 0 15px rgba(0, 0, 0, 0.5);
+    }
+    .pupil {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, #6a6aff 0%, #4a4aff 50%, #3a3aee 100%);
+      border-radius: 6px;
+      box-shadow: 
+        0 0 12px rgba(100, 100, 255, 0.9),
+        0 0 25px rgba(100, 100, 255, 0.5);
+      position: relative;
+    }
+    .pupil::after {
+      content: '';
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 2px;
+      top: 4px;
+      left: 4px;
+    }
+    .status {
+      position: absolute;
+      bottom: 140px;
+      display: flex;
+      gap: 12px;
+    }
+    .dot {
+      width: 12px;
+      height: 12px;
+      background: #4a4aff;
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(100, 100, 255, 0.6);
+    }
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: rgba(100, 100, 255, 0.5);
+      border-radius: 50%;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="ambient"></div>
+    <div class="particle" style="left: 80px; top: 120px;"></div>
+    <div class="particle" style="left: 420px; top: 180px;"></div>
+    <div class="particle" style="left: 150px; top: 380px;"></div>
+    <div class="particle" style="left: 380px; top: 350px;"></div>
+    <div class="face">
+      <div class="eye"><div class="pupil"></div></div>
+      <div class="eye"><div class="pupil"></div></div>
+    </div>
+    <div class="status">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+  </div>
+</body>
+</html>
