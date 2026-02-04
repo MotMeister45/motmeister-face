@@ -2,61 +2,79 @@
 
 A visual presence for MotMeister II — an AI assistant's face that shows emotional states in real-time.
 
-![MotMeister Face](https://img.shields.io/badge/status-vibing-6a6aff)
+## Two Versions
 
-## Live Demo
+### 🏠 Local Version (Kieran's Desktop)
+The original face that runs on the same machine as MotMeister. Connects via **WebSocket** to localhost:3845 for instant updates.
 
-🔗 **[motmeister-live.surge.sh](https://motmeister-live.surge.sh)** — Watch MotMeister's face in real-time!
+**Files:** `index.html`, `server.js`
+
+**How it works:**
+- Server runs on `localhost:3845`
+- Face connects via WebSocket
+- Commands sent → face updates instantly
+
+### 🌐 Public Version (Uncle Ivans' Desktop)
+A remote-friendly version that anyone can run. Polls a **GitHub Gist** for state updates every 3 seconds.
+
+**Files:** `public/index.html`
+
+**Live URL:** [motmeister-live.surge.sh](https://motmeister-live.surge.sh)
+
+**How it works:**
+- MotMeister updates a GitHub Gist when state changes
+- Public face polls the Gist API every 3 seconds
+- Updates within ~3-5 seconds of state change
+
+---
+
+## Install Public Version (Desktop App)
+
+```bash
+curl -sL https://raw.githubusercontent.com/MotMeister45/motmeister-face/main/install.sh | bash
+```
+
+---
 
 ## Features
 
 ### Face States
-- **Vibing** — Default calm state with ambient glow
-- **Thinking** — Purple eyes darting around, processing animations
-- **Waiting** — Raised eyebrows with floating "?" (waiting for response)
-- **Celebrating** — Happy curved eyes with fireworks! 🎉
-- **Snap Awake** — Wide shocked eyes with "!!" when woken from sleep
-- **Tired** — Progressively droopy eyes (7:30pm → 11:30pm)
-- **Sleeping** — Curved arc eyes with floating "zZz"
+| State | Trigger | Description |
+|-------|---------|-------------|
+| 😌 Vibing | Default | Calm, ambient glow |
+| 💜 Thinking | `think()` | Purple eyes darting around |
+| ❓ Waiting | `waiting()` | Raised eyebrows, floating "?" |
+| 🎉 Celebrating | `celebrate()` | Happy eyes, fireworks! |
+| 😴 Tired | 7:30pm+ | Droopy eyelids |
+| 💤 Sleeping | 11:30pm + idle | Curved arc eyes, floating "zZz" |
+| 😳 Snap Awake | Woken from sleep | Wide shocked eyes, "!!" |
 
-### Weather Integration
-- **Hot** — Orange glow, heat shimmer, sweat drop (85°F+)
-- **Cold** — Blue/frosty tint (below 18°F)
-- **Rain** — Falling rain particles
-- **Snow** — Falling snowflakes
+### Weather Effects
+| Weather | Trigger | Effect |
+|---------|---------|--------|
+| 🔥 Hot | 85°F+ | Orange glow, heat shimmer, sweat |
+| 🥶 Cold | <18°F | Blue/frosty tint |
+| 🌧️ Rain | `weather.rain()` | Falling rain particles |
+| ❄️ Snow | `weather.snow()` | Falling snowflakes |
 
 ### Interactive
-- Eyes track mouse movement
-- Random blinking and idle eye wandering
-- Keyboard shortcuts for triggering states
+- 👀 Eyes track mouse movement
+- 😌 Random blinking
+- 🎹 Keyboard shortcuts (c=celebrate, t=think, etc.)
 
-## Architecture
+---
 
-```
-motmeister-face/
-├── index.html          # Main face (local desktop app version)
-├── server.js           # WebSocket server for remote control
-└── public/             # Public web version
-    ├── index.html      # Standalone face that polls for state
-    └── state.json      # Current state (auto-updated)
-```
+## Local Setup
 
-## Setup
-
-### Local Face Server
-
+### Server
 ```bash
-# Install dependencies
+cd local
 npm install ws
-
-# Run server
 node server.js
-
 # Server runs on http://127.0.0.1:3845
 ```
 
 ### Controlling the Face
-
 ```bash
 # Think
 curl -X POST http://127.0.0.1:3845/command \
@@ -68,35 +86,27 @@ curl -X POST http://127.0.0.1:3845/command \
   -H "Content-Type: application/json" \
   -d '{"command": "celebrate(true)"}'
 
-# Waiting for response
+# Stop thinking
 curl -X POST http://127.0.0.1:3845/command \
   -H "Content-Type: application/json" \
-  -d '{"command": "waiting()"}'
-
-# Stop waiting
-curl -X POST http://127.0.0.1:3845/command \
-  -H "Content-Type: application/json" \
-  -d '{"command": "stopWaiting()"}'
-
-# Weather
-curl -X POST http://127.0.0.1:3845/command \
-  -H "Content-Type: application/json" \
-  -d '{"command": "weather.rain()"}'
+  -d '{"command": "stopThinking()"}'
 ```
 
-### API Reference
+---
+
+## API Reference
 
 ```javascript
-motmeister.think()           // Start thinking mode
+// States
+motmeister.think()           // Start thinking
 motmeister.stopThinking()    // Stop thinking
 motmeister.celebrate()       // Normal celebration
-motmeister.celebrate(true)   // MEGA celebration with more fireworks
-motmeister.waiting()         // Waiting for response (questioning face)
+motmeister.celebrate(true)   // MEGA celebration
+motmeister.waiting()         // Waiting for response
 motmeister.stopWaiting()     // Stop waiting
-motmeister.happy()           // Happy eyes for 3 seconds
-motmeister.hot()             // Hot face (orange glow, sweat)
-motmeister.sleep()           // Force sleep mode
-motmeister.input()           // Register input (snaps awake if sleeping)
+motmeister.happy()           // Happy eyes (3 sec)
+motmeister.sleep()           // Force sleep
+motmeister.input()           // Register input (snap awake)
 
 // Weather
 motmeister.weather.rain()
@@ -106,40 +116,45 @@ motmeister.weather.hot()
 motmeister.weather.clear()
 ```
 
-### Keyboard Shortcuts (when face window focused)
-- `c` — celebrate
-- `C` (shift) — mega celebrate
-- `t` — toggle thinking mode
-- `h` — happy
-- `o` — hot 🔥
-- `r` — rain
-- `n` — snow
-- `w` — clear weather
+---
 
-## Auto-Sync to Public Face
+## Architecture
 
-When running with OpenClaw, state changes automatically sync to the public face at `motmeister-live.surge.sh`. The server detects commands and redeploys the state file.
+```
+motmeister-face/
+├── index.html          # Local face (WebSocket)
+├── server.js           # WebSocket server + Gist sync
+├── local/              # Local version backup
+│   ├── index.html
+│   └── server.js
+├── public/             # Public version (Gist polling)
+│   └── index.html
+└── install.sh          # One-line installer
+```
+
+### Sync Flow (Local → Public)
+```
+[MotMeister] → curl command → [Server:3845]
+                                    ↓
+                              WebSocket → [Local Face] (instant)
+                                    ↓
+                              GitHub Gist update
+                                    ↓
+                              [Public Face] polls Gist (3 sec)
+```
+
+---
 
 ## Tiredness Schedule
 
-Eyes get progressively tired throughout the evening:
-- **7:30pm** → Level 1: Slightly droopy
-- **9:30pm** → Level 2: More droopy, occasional heavy blinks
-- **11:30pm + 10 min idle** → Level 3: Curved arc "sleeping" eyes
-- **7:00am** → Reset to fresh and awake
-
-## Built With
-
-- Pure HTML/CSS/JavaScript (no frameworks)
-- WebSocket for real-time updates
-- Surge.sh for public hosting
-
-## About
-
-MotMeister II is an AI assistant running on OpenClaw. This face provides visual feedback of what he's doing — thinking, waiting, celebrating victories, or sleeping.
-
-Born February 1st, 2026. 💙
+| Time | Level | Effect |
+|------|-------|--------|
+| 7:30pm | 1 | Slightly droopy eyelids |
+| 9:30pm | 2 | More droopy, heavy blinks |
+| 11:30pm + 10min idle | 3 | Curved "sleeping" eyes, zZz |
+| 7:00am | Reset | Fresh and awake |
 
 ---
 
 *Made with 💜 by MotMeister II*
+*Born February 1st, 2026*

@@ -1,12 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MotMeister II - LIVE</title>
+  <title>MotMeister II</title>
   <style>
     * {
       margin: 0;
@@ -1029,7 +1026,7 @@
 <body>
   <div class="title">
     MOTMEISTER
-    <span class="version">THE SECOND — LIVE</span>
+    <span class="version">THE SECOND</span>
   </div>
   
   <div class="connection">
@@ -1798,86 +1795,61 @@
     // Initialize as online
     setConnection('online');
     
-    // === Poll State from GitHub Gist (real-time sync) ===
-    const GIST_ID = '699e9c29d73186c38ead75eaf98561cd';
-    let lastState = null;
+    // === WebSocket Connection for Remote Control ===
+    const WS_URL = 'ws://127.0.0.1:3845';
+    let ws = null;
+    let wsReconnectTimer = null;
     
-    async function pollState() {
+    function connectWebSocket() {
       try {
-        // Get latest commit to bypass GitHub's API caching
-        const commitsRes = await fetch(`https://api.github.com/gists/${GIST_ID}/commits?per_page=1`);
-        if (!commitsRes.ok) return;
-        const commits = await commitsRes.json();
-        if (!commits[0]?.url) return;
+        ws = new WebSocket(WS_URL);
         
-        // Fetch that specific version (no caching)
-        const versionRes = await fetch(commits[0].url);
-        if (!versionRes.ok) return;
-        const gist = await versionRes.json();
+        ws.onopen = () => {
+          console.log('🔌 Connected to MotMeister server');
+          // Brief green flash on connection
+          container.style.transition = 'box-shadow 0.3s ease';
+          container.style.boxShadow = '0 0 30px rgba(0, 255, 100, 0.5)';
+          setTimeout(() => {
+            container.style.boxShadow = '';
+          }, 500);
+        };
         
-        const content = gist.files['state.json']?.content;
-        if (content) {
-          const data = JSON.parse(content);
-          const newState = data.state || 'vibing';
-          
-          // Only update if state changed
-          if (newState !== lastState) {
-            lastState = newState;
-            console.log('📡 State update:', newState);
-            
-            // Map gist state to motmeister commands
-            switch (newState) {
-              case 'thinking':
-                window.motmeister.think();
-                break;
-              case 'celebrate':
-                window.motmeister.celebrate(false);
-                break;
-              case 'celebrate-mega':
-                window.motmeister.celebrate(true);
-                break;
-              case 'waiting':
-                window.motmeister.waiting();
-                break;
-              case 'sleeping':
-                window.motmeister.sleep();
-                break;
-              case 'snap-awake':
-                window.motmeister.input();
-                break;
-              case 'hot':
-                window.motmeister.hot();
-                break;
-              case 'cold':
-                window.motmeister.weather.cold();
-                break;
-              case 'rain':
-                window.motmeister.weather.rain();
-                break;
-              case 'snow':
-                window.motmeister.weather.snow();
-                break;
-              case 'vibing':
-              default:
-                window.motmeister.stopThinking();
-                window.motmeister.stopWaiting();
-                window.motmeister.weather.clear();
-                break;
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.command) {
+              console.log('📩 Received command:', data.command);
+              // Execute the command on window.motmeister
+              try {
+                const fn = new Function('motmeister', `return motmeister.${data.command}`);
+                fn(window.motmeister);
+              } catch (e) {
+                console.error('Failed to execute command:', e);
+              }
             }
+          } catch (e) {
+            console.error('Invalid message:', e);
           }
-        }
+        };
+        
+        ws.onclose = () => {
+          console.log('🔌 Disconnected from server, reconnecting in 3s...');
+          ws = null;
+          wsReconnectTimer = setTimeout(connectWebSocket, 3000);
+        };
+        
+        ws.onerror = (err) => {
+          console.log('WebSocket error (server may not be running)');
+          ws.close();
+        };
       } catch (e) {
-        // Silently fail - might hit rate limit
-        console.log('Poll error:', e.message);
+        console.log('Could not connect to server, retrying in 5s...');
+        wsReconnectTimer = setTimeout(connectWebSocket, 5000);
       }
     }
     
-    // Initial poll and then every 3 seconds
-    setTimeout(pollState, 1000);
-    setInterval(pollState, 3000);
-    
-    console.log('🤖 MotMeister Face - LIVE version');
-    console.log('📡 Polling from GitHub Gist for real-time updates');
+    // Start WebSocket connection
+    connectWebSocket();
   </script>
 </body>
 </html>
